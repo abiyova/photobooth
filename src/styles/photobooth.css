@@ -11,6 +11,15 @@
   padding: 0 16px;
 }
 
+.photobooth-status-text {
+  font-family: "Quicksand", sans-serif;
+  font-weight: 600;
+  color: #2d9c9c;
+  font-size: clamp(18px, 3vw, 26px);
+  text-align: center;
+  margin: 0;
+}
+
 /* --- Top Bar --- */
 .photobooth-topbar {
   width: 100%;
@@ -71,9 +80,6 @@
 }
 
 .photobooth-btn-back {
-  position: absolute;
-  left: 0;
-  top: 10;
   height: 40px;
   padding: 0 16px;
   line-height: 40px;
@@ -88,6 +94,41 @@
   background: #e8763a;
   color: white;
   box-shadow: 0 4px 12px rgba(232, 118, 58, 0.3);
+}
+
+.photobooth-fixed-left {
+  position: fixed;
+  left: 20px;
+  top: 20px;
+  z-index: 100;
+}
+
+.photobooth-fixed-right {
+  position: fixed;
+  right: 20px;
+  top: 20px;
+  z-index: 100;
+  padding: 0.5rem 1.2rem;
+  background: #f44336;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-family: "Quicksand", sans-serif;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.2);
+  transition: all 0.2s ease;
+}
+
+.photobooth-fixed-right:hover {
+  background: #d32f2f;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(244, 67, 54, 0.3);
+}
+
+.photobooth-fixed-right:active {
+  transform: translateY(0);
 }
 
 .photobooth-btn-redo {

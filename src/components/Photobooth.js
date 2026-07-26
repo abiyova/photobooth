@@ -444,41 +444,31 @@ export default function PhotoBooth() {
 
   return (
     <div className="photobooth-center">
-      {/* top bar with back btn and text */}
-      <div className="photobooth-topbar">
-        {selectedFrame && (
-          <button
-            className="photobooth-btn photobooth-btn-back"
-            onClick={handleBack}
-          >
-            {" "}
-            ← Back
-          </button>
-        )}
-
-        <h1 className="photobooth-topbar-title">
-          {!selectedFrame
-            ? "Select a frame"
-            : mode === "photo"
-              ? "Smile :)"
-              : ""}
-        </h1>
-
+      {/* Fixed buttons on edges */}
+      {selectedFrame && (
         <button
-          onClick={handleLogout}
-          style={{
-            padding: "0.4rem 1rem",
-            background: "#f44336",
-            color: "#fff",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "0.85rem",
-          }}
+          className="photobooth-btn photobooth-btn-back photobooth-fixed-left"
+          onClick={handleBack}
         >
-          Logout
+          ← Back
         </button>
-      </div>
+      )}
+
+      <button
+        className="photobooth-fixed-right"
+        onClick={handleLogout}
+      >
+        Logout
+      </button>
+
+      <h2 className="photobooth-status-text">
+        {!selectedFrame
+          ? "Select a frame"
+          : mode === "photo"
+            ? "Smile :)"
+            : "All done!"}
+      </h2>
+
       <div className="photobooth-main">
         {!selectedFrame ? (
           <div className="photobooth-frame-grid">
@@ -574,20 +564,7 @@ export default function PhotoBooth() {
               className="photobooth-canvas-panel"
               style={{ position: "relative" }}
             >
-              {mode === "decorate" && (
-                <h2
-                  style={{
-                    fontFamily: '"Quicksand", sans-serif',
-                    color: "#2d9c9c",
-                    fontWeight: 700,
-                    fontSize: "clamp(18px, 3vw, 26px)",
-                    textAlign: "center",
-                    margin: "0 0 12px",
-                  }}
-                >
-                  All done!
-                </h2>
-              )}
+
 
               <canvas
                 ref={canvasRef}

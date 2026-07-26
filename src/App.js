@@ -12,6 +12,7 @@ import { supabase } from "./supabase";
 function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [resetKey, setResetKey] = useState(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -32,11 +33,15 @@ function App() {
 
   const isAdmin = session?.user?.email?.toLowerCase().includes('admin');
 
+  const handleLogoClick = () => {
+    setResetKey((k) => k + 1);
+  };
+
   return (
     <Router>
       <div className="App">
         <div className="app-logo-bar">
-          <h1 className="app-logo-title">
+          <h1 className="app-logo-title" onClick={handleLogoClick} style={{ cursor: "pointer" }}>
             Photobooth
           </h1>
         </div>
@@ -44,7 +49,7 @@ function App() {
         <div className="app-content">
           <Routes>
             <Route path="/" element={session ? (isAdmin ? <Navigate to="/admin" /> : <Navigate to="/booth" />) : <Login />} />
-            <Route path="/booth" element={session && !isAdmin ? <Photobooth user={session.user} /> : <Navigate to="/" />} />
+            <Route path="/booth" element={session && !isAdmin ? <Photobooth key={resetKey} user={session.user} /> : <Navigate to="/" />} />
             <Route path="/admin" element={session && isAdmin ? <Admin /> : <Navigate to="/" />} />
           </Routes>
         </div>
