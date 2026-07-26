@@ -255,20 +255,7 @@ export default function PhotoBooth() {
     }, 1000);
   };
 
-  const uploadPhoto = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.src = reader.result;
-      img.onload = () => addPhoto(img);
-    };
-
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  };
 
   const redoLastPhoto = () => {
     if (!photos.length) return;
@@ -517,18 +504,7 @@ export default function PhotoBooth() {
                         >
                           Take Photo
                         </button>
-                        <label
-                          className="photobooth-btn"
-                          style={{ cursor: "pointer" }}
-                        >
-                          Upload
-                          <input
-                            type="file"
-                            accept="image /*"
-                            onChange={uploadPhoto}
-                            style={{ display: "none" }}
-                          />
-                        </label>
+
                       </>
                     )}
                     {/* redo btn */}
