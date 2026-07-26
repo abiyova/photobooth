@@ -402,22 +402,20 @@ export default function PhotoBooth() {
       const blob = await fetchRes.blob();
 
       // Upload to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase
-        .storage
-        .from('booth')
-        .upload(fileName, blob, { contentType: 'image/jpeg' });
+      const { error: uploadError } = await supabase.storage
+        .from("booth")
+        .upload(fileName, blob, { contentType: "image/jpeg" });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase
-        .storage
-        .from('booth')
-        .getPublicUrl(fileName);
+      // Get public URL.
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("booth").getPublicUrl(fileName);
 
       // Insert into Database
       const { error: dbError } = await supabase
-        .from('photos')
+        .from("photos")
         .insert([{ url: publicUrl }]);
 
       if (dbError) throw dbError;
@@ -468,7 +466,15 @@ export default function PhotoBooth() {
 
         <button
           onClick={handleLogout}
-          style={{ padding: '0.4rem 1rem', background: '#f44336', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}
+          style={{
+            padding: "0.4rem 1rem",
+            background: "#f44336",
+            color: "#fff",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "0.85rem",
+          }}
         >
           Logout
         </button>
@@ -564,9 +570,21 @@ export default function PhotoBooth() {
             </div>
 
             {/* Display frame */}
-            <div className="photobooth-canvas-panel" style={{ position: 'relative' }}>
+            <div
+              className="photobooth-canvas-panel"
+              style={{ position: "relative" }}
+            >
               {mode === "decorate" && (
-                <h2 style={{ fontFamily: '"Quicksand", sans-serif', color: '#2d9c9c', fontWeight: 700, fontSize: 'clamp(18px, 3vw, 26px)', textAlign: 'center', margin: '0 0 12px' }}>
+                <h2
+                  style={{
+                    fontFamily: '"Quicksand", sans-serif',
+                    color: "#2d9c9c",
+                    fontWeight: 700,
+                    fontSize: "clamp(18px, 3vw, 26px)",
+                    textAlign: "center",
+                    margin: "0 0 12px",
+                  }}
+                >
                   All done!
                 </h2>
               )}
@@ -581,19 +599,57 @@ export default function PhotoBooth() {
               />
 
               {mode === "decorate" && (
-                <div style={{ position: 'absolute', right: '-220px', top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', minWidth: '160px' }}>
+                <div
+                  style={{
+                    position: "absolute",
+                    right: "-220px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "1rem",
+                    minWidth: "160px",
+                  }}
+                >
                   {!downloadUrl && !isUploading && (
                     <button className="photobooth-btn" onClick={downloadPhoto}>
                       Get QR Code
                     </button>
                   )}
                   {isUploading && (
-                    <p style={{ fontFamily: '"Quicksand", sans-serif', color: '#2d9c9c', fontWeight: 600 }}>Uploading...</p>
+                    <p
+                      style={{
+                        fontFamily: '"Quicksand", sans-serif',
+                        color: "#2d9c9c",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Uploading...
+                    </p>
                   )}
                   {downloadUrl && (
-                    <div style={{ textAlign: 'center', background: 'white', padding: '1rem', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
+                    <div
+                      style={{
+                        textAlign: "center",
+                        background: "white",
+                        padding: "1rem",
+                        borderRadius: "12px",
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                      }}
+                    >
                       <QRCodeCanvas value={downloadUrl} size={150} />
-                      <p style={{ color: '#333', marginTop: '0.5rem', fontSize: '0.85rem', fontWeight: 'bold', fontFamily: '"Quicksand", sans-serif' }}>Scan to download!</p>
+                      <p
+                        style={{
+                          color: "#333",
+                          marginTop: "0.5rem",
+                          fontSize: "0.85rem",
+                          fontWeight: "bold",
+                          fontFamily: '"Quicksand", sans-serif',
+                        }}
+                      >
+                        Scan to download!
+                      </p>
                     </div>
                   )}
                 </div>
