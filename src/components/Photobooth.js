@@ -413,7 +413,7 @@ export default function PhotoBooth() {
           {!selectedFrame
             ? "Select a frame"
             : mode === "photo"
-              ? "⋆｡‧˚ʚ Smile :)ɞ˚‧｡⋆"
+              ? "Smile :)"
               : ". ݁₊ ⊹ . ݁Let's decorate . ⊹ ₊ ݁."}
         </h1>
       </div>
