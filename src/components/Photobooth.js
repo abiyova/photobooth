@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import Webcam from "react-webcam";
-
+import { QRCodeCanvas } from "qrcode.react";
+import { supabase } from "../supabase";
 const frameOptions = [
   "/assets/frames/frame-2.png",
   "/assets/frames/frame-3.png",
@@ -116,6 +117,9 @@ export default function PhotoBooth() {
   const [draggingSticker, setDraggingSticker] = useState(null);
   const [selectedSticker, setSelectedSticker] = useState(null);
 
+  const [downloadUrl, setDownloadUrl] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+
   // useEffects
 
   // frames
@@ -174,6 +178,11 @@ export default function PhotoBooth() {
   useEffect(drawCanvas, [photos, stickers, selectedSticker, photoCount]);
 
   const handleBack = () => {
+    if (downloadUrl || isUploading) {
+      setDownloadUrl(null);
+      setIsUploading(false);
+      return;
+    }
     if (mode === "decorate") {
       setMode("photo");
       setCanTakePhoto(false);
@@ -379,11 +388,47 @@ export default function PhotoBooth() {
 
   //download
 
-  const downloadPhoto = () => {
-    const a = document.createElement("a");
-    a.href = canvasRef.current.toDataURL("image.png");
-    a.download = "photo-strip.png";
-    a.click();
+  const downloadPhoto = async () => {
+    if (!canvasRef.current) return;
+    setIsUploading(true);
+    try {
+      // Use JPEG with 80% quality instead of PNG to drastically reduce file size!
+      // A large PNG can be 10MB+, causing the upload to seem "stuck".
+      const dataUrl = canvasRef.current.toDataURL("image/jpeg", 0.8);
+      const fileName = `photos/photo_${Date.now()}.jpg`;
+
+      // Convert data URL to Blob
+      const fetchRes = await fetch(dataUrl);
+      const blob = await fetchRes.blob();
+
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase
+        .storage
+        .from('booth')
+        .upload(fileName, blob, { contentType: 'image/jpeg' });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase
+        .storage
+        .from('booth')
+        .getPublicUrl(fileName);
+
+      // Insert into Database
+      const { error: dbError } = await supabase
+        .from('photos')
+        .insert([{ url: publicUrl }]);
+
+      if (dbError) throw dbError;
+
+      setDownloadUrl(publicUrl);
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      alert("Failed to upload photo for QR code. Check Supabase config.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const canvasDisplayStyle = {};
@@ -394,6 +439,10 @@ export default function PhotoBooth() {
     canvasDisplayStyle.width = 200;
     canvasDisplayStyle.height = 500;
   }
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   return (
     <div className="photobooth-center">
@@ -414,8 +463,15 @@ export default function PhotoBooth() {
             ? "Select a frame"
             : mode === "photo"
               ? "Smile :)"
-              : ". ݁₊ ⊹ . ݁Let's decorate . ⊹ ₊ ݁."}
+              : ""}
         </h1>
+
+        <button
+          onClick={handleLogout}
+          style={{ padding: '0.4rem 1rem', background: '#f44336', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}
+        >
+          Logout
+        </button>
       </div>
       <div className="photobooth-main">
         {!selectedFrame ? (
@@ -508,7 +564,13 @@ export default function PhotoBooth() {
             </div>
 
             {/* Display frame */}
-            <div className="photobooth-canvas-panel">
+            <div className="photobooth-canvas-panel" style={{ position: 'relative' }}>
+              {mode === "decorate" && (
+                <h2 style={{ fontFamily: '"Quicksand", sans-serif', color: '#2d9c9c', fontWeight: 700, fontSize: 'clamp(18px, 3vw, 26px)', textAlign: 'center', margin: '0 0 12px' }}>
+                  All done!
+                </h2>
+              )}
+
               <canvas
                 ref={canvasRef}
                 className="photobooth-canvas"
@@ -519,10 +581,21 @@ export default function PhotoBooth() {
               />
 
               {mode === "decorate" && (
-                <div className="photobooth-btn-download">
-                  <button className="photobooth-btn" onClick={downloadPhoto}>
-                    Download
-                  </button>
+                <div style={{ position: 'absolute', right: '-220px', top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', minWidth: '160px' }}>
+                  {!downloadUrl && !isUploading && (
+                    <button className="photobooth-btn" onClick={downloadPhoto}>
+                      Get QR Code
+                    </button>
+                  )}
+                  {isUploading && (
+                    <p style={{ fontFamily: '"Quicksand", sans-serif', color: '#2d9c9c', fontWeight: 600 }}>Uploading...</p>
+                  )}
+                  {downloadUrl && (
+                    <div style={{ textAlign: 'center', background: 'white', padding: '1rem', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
+                      <QRCodeCanvas value={downloadUrl} size={150} />
+                      <p style={{ color: '#333', marginTop: '0.5rem', fontSize: '0.85rem', fontWeight: 'bold', fontFamily: '"Quicksand", sans-serif' }}>Scan to download!</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
