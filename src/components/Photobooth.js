@@ -16,7 +16,7 @@ const frameOptions = [
 
 const stickerOptions = [];
 
-const videoConstraints = { width: 953, height: 599, facingMode: "user" };
+const videoConstraints = { width: 1920, height: 1080, facingMode: "user" };
 
 const getFrameDimensions = (src) => {
   if (!src) return { width: 1200, height: 3000 };
@@ -486,6 +486,7 @@ export default function PhotoBooth() {
                       screenshotFormat="image/png"
                       videoConstraints={videoConstraints}
                       mirrored={true}
+                      forceScreenshotSourceSize={true}
                     />
 
                     {/* Overlay countdown */}
