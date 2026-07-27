@@ -255,7 +255,20 @@ export default function PhotoBooth() {
     }, 1000);
   };
 
+  const uploadPhoto = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.src = reader.result;
+      img.onload = () => addPhoto(img);
+    };
+
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
 
   const redoLastPhoto = () => {
     if (!photos.length) return;
@@ -389,13 +402,13 @@ export default function PhotoBooth() {
       const blob = await fetchRes.blob();
 
       // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from("booth")
         .upload(fileName, blob, { contentType: "image/jpeg" });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL.
+      // Get public URL
       const {
         data: { publicUrl },
       } = supabase.storage.from("booth").getPublicUrl(fileName);
@@ -431,31 +444,41 @@ export default function PhotoBooth() {
 
   return (
     <div className="photobooth-center">
-      {/* Fixed buttons on edges */}
-      {selectedFrame && (
+      {/* top bar with back btn and text */}
+      <div className="photobooth-topbar">
+        {selectedFrame && (
+          <button
+            className="photobooth-btn photobooth-btn-back"
+            onClick={handleBack}
+          >
+            {" "}
+            ← Back
+          </button>
+        )}
+
+        <h1 className="photobooth-topbar-title">
+          {!selectedFrame
+            ? "Select a frame"
+            : mode === "photo"
+              ? "Smile :)"
+              : ""}
+        </h1>
+
         <button
-          className="photobooth-btn photobooth-btn-back photobooth-fixed-left"
-          onClick={handleBack}
+          onClick={handleLogout}
+          style={{
+            padding: "0.4rem 1rem",
+            background: "#f44336",
+            color: "#fff",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "0.85rem",
+          }}
         >
-          ← Back
+          Logout
         </button>
-      )}
-
-      <button
-        className="photobooth-fixed-right"
-        onClick={handleLogout}
-      >
-        Logout
-      </button>
-
-      <h2 className="photobooth-status-text">
-        {!selectedFrame
-          ? "Select a frame"
-          : mode === "photo"
-            ? "Smile :)"
-            : "All done!"}
-      </h2>
-
+      </div>
       <div className="photobooth-main">
         {!selectedFrame ? (
           <div className="photobooth-frame-grid">
@@ -505,7 +528,18 @@ export default function PhotoBooth() {
                         >
                           Take Photo
                         </button>
-
+                        <label
+                          className="photobooth-btn"
+                          style={{ cursor: "pointer" }}
+                        >
+                          Upload
+                          <input
+                            type="file"
+                            accept="image /*"
+                            onChange={uploadPhoto}
+                            style={{ display: "none" }}
+                          />
+                        </label>
                       </>
                     )}
                     {/* redo btn */}
@@ -541,7 +575,20 @@ export default function PhotoBooth() {
               className="photobooth-canvas-panel"
               style={{ position: "relative" }}
             >
-
+              {mode === "decorate" && (
+                <h2
+                  style={{
+                    fontFamily: '"Quicksand", sans-serif',
+                    color: "#2d9c9c",
+                    fontWeight: 700,
+                    fontSize: "clamp(18px, 3vw, 26px)",
+                    textAlign: "center",
+                    margin: "0 0 12px",
+                  }}
+                >
+                  All done!
+                </h2>
+              )}
 
               <canvas
                 ref={canvasRef}
