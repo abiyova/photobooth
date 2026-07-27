@@ -413,6 +413,12 @@ export default function PhotoBooth() {
         data: { publicUrl },
       } = supabase.storage.from("booth").getPublicUrl(fileName);
 
+      const {
+        data: { publicUrl: qrUrl },
+      } = supabase.storage.from("booth").getPublicUrl(fileName, {
+        download: `photobooth_${Date.now()}.jpg`,
+      });
+
       // Insert into Database
       const { error: dbError } = await supabase
         .from("photos")
@@ -420,7 +426,7 @@ export default function PhotoBooth() {
 
       if (dbError) throw dbError;
 
-      setDownloadUrl(publicUrl);
+      setDownloadUrl(qrUrl);
     } catch (error) {
       console.error("Error uploading photo:", error);
       alert("Failed to upload photo for QR code. Check Supabase config.");

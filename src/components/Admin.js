@@ -34,8 +34,22 @@ export default function Admin() {
     navigate("/");
   };
 
-  const handleDownload = (url) => {
-    window.open(url, '_blank');
+  const handleDownload = async (url) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `photobooth_${Date.now()}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Error downloading image:", error);
+      window.open(url, '_blank'); // fallback
+    }
   };
 
   const handleDelete = async (id, url) => {
