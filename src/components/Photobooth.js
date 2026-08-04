@@ -2,7 +2,8 @@ import React, { useRef, useState, useEffect } from "react";
 import Webcam from "react-webcam";
 import { QRCodeCanvas } from "qrcode.react";
 import { supabase } from "../supabase";
-const frameOptions = [
+
+const defaultFrameOptions = [
   "/assets/frames/frame-2.png",
   "/assets/frames/frame-3.png",
   "/assets/frames/frame-4.png",
@@ -18,22 +19,30 @@ const stickerOptions = [];
 
 const videoConstraints = { width: 1920, height: 1080, facingMode: "user" };
 
-const getFrameDimensions = (src) => {
-  if (!src) return { width: 1200, height: 3000 };
+const getFrameDimensions = (frame) => {
+  if (!frame) return { width: 1200, height: 3000 };
+  if (!frame.isDefault) {
+    return { width: frame.width, height: frame.height };
+  }
+  const src = frame.imageUrl;
   if (src.includes("heart-frame")) {
     return { width: 1200, height: 3000 };
   }
   return { width: 1181, height: 1772 };
 };
 
-const getFrameSlots = (src) => {
+const getFrameSlots = (frame) => {
   const heartSlots = [
     { x: 123, y: 78, width: 953, height: 599 },
     { x: 123, y: 697, width: 953, height: 599 },
     { x: 123, y: 1286, width: 953, height: 599 },
     { x: 123, y: 1885, width: 953, height: 599 },
   ];
-  if (!src) return heartSlots;
+  
+  if (!frame) return heartSlots;
+  if (!frame.isDefault) return frame.slots;
+  
+  const src = frame.imageUrl;
   if (src.includes("heart-frame")) return heartSlots;
 
   const expand = (slots) =>
@@ -101,6 +110,7 @@ export default function PhotoBooth() {
   const canvasRef = useRef(null);
   const frameImgRef = useRef(null);
 
+  const [availableFrames, setAvailableFrames] = useState([]);
   const [selectedFrame, setSelectedFrame] = useState(null);
   const slots = getFrameSlots(selectedFrame);
 
@@ -119,14 +129,51 @@ export default function PhotoBooth() {
 
   const [downloadUrl, setDownloadUrl] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [printDataUrl, setPrintDataUrl] = useState(null);
 
-  // useEffects
+  useEffect(() => {
+    const handleAfterPrint = () => setPrintDataUrl(null);
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => window.removeEventListener('afterprint', handleAfterPrint);
+  }, []);
+
+  // fetch frames
+  useEffect(() => {
+    const fetchFrames = async () => {
+      try {
+        const { data, error } = await supabase.storage.from('booth').list('frames/configs', { limit: 100 });
+        const customFrames = [];
+        if (!error && data) {
+          for (const file of data) {
+            if (file.name.endsWith('.json')) {
+              const { data: fileData, error: downloadError } = await supabase.storage.from('booth').download(`frames/configs/${file.name}`);
+              if (downloadError) continue;
+              const text = await fileData.text();
+              try {
+                const config = JSON.parse(text);
+                customFrames.push({ ...config, isDefault: false });
+              } catch (e) {
+                console.error("Error parsing frame config", file.name);
+              }
+            }
+          }
+        }
+        const defaults = defaultFrameOptions.map(src => ({ imageUrl: src, isDefault: true }));
+        setAvailableFrames([...defaults, ...customFrames]);
+      } catch (err) {
+        console.error("Error fetching custom frames", err);
+        setAvailableFrames(defaultFrameOptions.map(src => ({ imageUrl: src, isDefault: true })));
+      }
+    };
+    fetchFrames();
+  }, []);
 
   // frames
   useEffect(() => {
     if (!selectedFrame) return;
     const img = new Image();
-    img.src = selectedFrame;
+    img.crossOrigin = "anonymous";
+    img.src = selectedFrame.imageUrl;
 
     img.onload = () => {
       frameImgRef.current = img;
@@ -365,6 +412,7 @@ export default function PhotoBooth() {
   // add Sticker
   const addSticker = (src) => {
     const img = new Image();
+    img.crossOrigin = "anonymous";
     img.src = src;
     img.onload = () => setStickers((s) => [...s, { img, x: 400, y: 100 }]);
   };
@@ -387,28 +435,22 @@ export default function PhotoBooth() {
   }, [selectedSticker, mode]);
 
   //download
-
   const downloadPhoto = async () => {
     if (!canvasRef.current) return;
     setIsUploading(true);
     try {
-      // Use JPEG with 80% quality instead of PNG to drastically reduce file size!
-      // A large PNG can be 10MB+, causing the upload to seem "stuck".
       const dataUrl = canvasRef.current.toDataURL("image/jpeg", 0.8);
       const fileName = `photos/photo_${Date.now()}.jpg`;
 
-      // Convert data URL to Blob
       const fetchRes = await fetch(dataUrl);
       const blob = await fetchRes.blob();
 
-      // Upload to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("booth")
         .upload(fileName, blob, { contentType: "image/jpeg" });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const {
         data: { publicUrl },
       } = supabase.storage.from("booth").getPublicUrl(fileName);
@@ -419,7 +461,6 @@ export default function PhotoBooth() {
         download: `photobooth_${Date.now()}.jpg`,
       });
 
-      // Insert into Database
       const { error: dbError } = await supabase
         .from("photos")
         .insert([{ url: publicUrl }]);
@@ -435,8 +476,19 @@ export default function PhotoBooth() {
     }
   };
 
+  const handlePrint = () => {
+    if (!canvasRef.current) return;
+    const dataUrl = canvasRef.current.toDataURL("image/jpeg", 1.0);
+    setPrintDataUrl(dataUrl);
+    
+    // Wait briefly for the image to render in the DOM before opening print dialog
+    setTimeout(() => {
+      window.print();
+    }, 500);
+  };
+
   const canvasDisplayStyle = {};
-  if (selectedFrame && !selectedFrame.includes("heart-frame")) {
+  if (selectedFrame && !selectedFrame.imageUrl.includes("heart-frame")) {
     canvasDisplayStyle.width = (1181 / 1772) * 500;
     canvasDisplayStyle.height = 500;
   } else {
@@ -449,7 +501,15 @@ export default function PhotoBooth() {
   };
 
   return (
-    <div className="photobooth-center">
+    <>
+      {/* Hidden print area */}
+      {printDataUrl && (
+        <div className="print-area">
+          <img src={printDataUrl} alt="Print" className="print-image" />
+        </div>
+      )}
+      
+      <div className="photobooth-center no-print">
       {/* top bar with back btn and text */}
       <div className="photobooth-topbar">
         {selectedFrame && (
@@ -488,15 +548,15 @@ export default function PhotoBooth() {
       <div className="photobooth-main">
         {!selectedFrame ? (
           <div className="photobooth-frame-grid">
-            {frameOptions.map((src) => {
-              const isSelected = selectedFrame === src;
+            {availableFrames.map((frame, index) => {
+              const isSelected = selectedFrame === frame;
 
               return (
                 <img
-                  key={src}
-                  src={src}
+                  key={index}
+                  src={frame.imageUrl}
                   alt="frame"
-                  onClick={() => setSelectedFrame(src)}
+                  onClick={() => setSelectedFrame(frame)}
                   className={`photobooth-frame-thumb${isSelected ? " selected" : ""}`}
                 />
               );
@@ -620,9 +680,14 @@ export default function PhotoBooth() {
                   }}
                 >
                   {!downloadUrl && !isUploading && (
-                    <button className="photobooth-btn" onClick={downloadPhoto}>
-                      Get QR Code
-                    </button>
+                    <>
+                      <button className="photobooth-btn" onClick={downloadPhoto}>
+                        Get QR Code
+                      </button>
+                      <button className="photobooth-btn" onClick={handlePrint} style={{ background: '#2196F3', color: '#fff', border: '2px solid #2196F3', fontWeight: 700, fontSize: '22px', letterSpacing: '0.5px' }}>
+                        🖨️ Cetak Foto
+                      </button>
+                    </>
                   )}
                   {isUploading && (
                     <p
@@ -666,5 +731,6 @@ export default function PhotoBooth() {
         )}
       </div>
     </div>
+    </>
   );
 }

@@ -504,3 +504,134 @@
     padding: 0.45rem;
   }
 }
+
+/* ============================= */
+/*       FRAME BUILDER STYLES    */
+/* ============================= */
+
+.admin-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.admin-tab {
+  background: none;
+  border: none;
+  font-family: "Quicksand", sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #888;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.admin-tab:hover {
+  color: #2d9c9c;
+}
+
+.admin-tab.active {
+  color: #2d9c9c;
+}
+
+.admin-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -0.65rem;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: #2d9c9c;
+  border-radius: 3px 3px 0 0;
+}
+
+.admin-tab-content {
+  animation: adminFadeIn 0.3s ease;
+}
+
+.frame-builder-content {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.frame-builder-sidebar {
+  flex: 0 0 300px;
+}
+
+.frame-builder-sidebar h3 {
+  font-family: "Quicksand", sans-serif;
+  color: #2d9c9c;
+  margin-top: 0;
+}
+
+.frame-builder-help {
+  font-family: "Quicksand", sans-serif;
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.frame-slots-list {
+  margin-top: 1.5rem;
+  background: #f9f9f9;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.frame-slot-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+  font-family: "Quicksand", sans-serif;
+  font-size: 0.85rem;
+}
+
+.frame-slot-item:last-child {
+  border-bottom: none;
+}
+
+.frame-builder-canvas-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 1rem;
+  overflow: auto;
+}
+
+.frame-builder-placeholder {
+  width: 100%;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  font-family: "Quicksand", sans-serif;
+  font-weight: 600;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .frame-builder-content {
+    flex-direction: column;
+  }
+  .frame-builder-sidebar {
+    flex: none;
+    width: 100%;
+  }
+}
