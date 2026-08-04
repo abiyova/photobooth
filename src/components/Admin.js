@@ -512,7 +512,24 @@ export default function Admin() {
                   <p className="frame-builder-help">
                     1. Unggah gambar frame Anda (format PNG transparan dianjurkan).
                   </p>
-                  <input type="file" accept="image/png, image/jpeg" onChange={handleFrameUpload} style={{ marginBottom: '1rem' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <input type="file" accept="image/png, image/jpeg" onChange={handleFrameUpload} />
+                    {frameImageUrl && (
+                      <button
+                        onClick={() => {
+                          if (frameImageUrl) URL.revokeObjectURL(frameImageUrl);
+                          setFrameImageFile(null);
+                          setFrameImageUrl(null);
+                          setFrameDimensions({ width: 0, height: 0 });
+                          setSlots([]);
+                        }}
+                        className="admin-btn admin-btn-delete-bulk"
+                        style={{ padding: '0.3rem 0.7rem', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                      >
+                        Hapus Gambar
+                      </button>
+                    )}
+                  </div>
                   
                   {frameImageUrl && (
                     <>
