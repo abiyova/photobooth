@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Photobooth from "./components/Photobooth";
 import Login from "./components/Login";
 import Admin from "./components/Admin";
+import { ToastProvider } from "./components/Toast";
 import "./styles/global.css";
 import "./styles/admin.css";
 import { supabase } from "./supabase";
@@ -38,23 +39,25 @@ function App() {
   };
 
   return (
-    <Router>
-      <div className="App">
-        <div className="app-logo-bar">
-          <h1 className="app-logo-title" onClick={handleLogoClick} style={{ cursor: "pointer" }}>
-            Photobooth
-          </h1>
-        </div>
+    <ToastProvider>
+      <Router>
+        <div className="App">
+          <div className="app-logo-bar">
+            <h1 className="app-logo-title" onClick={handleLogoClick} style={{ cursor: "pointer" }}>
+              Photobooth
+            </h1>
+          </div>
 
-        <div className="app-content">
-          <Routes>
-            <Route path="/" element={session ? (isAdmin ? <Navigate to="/admin" /> : <Navigate to="/booth" />) : <Login />} />
-            <Route path="/booth" element={session && !isAdmin ? <Photobooth key={resetKey} user={session.user} /> : <Navigate to="/" />} />
-            <Route path="/admin" element={session && isAdmin ? <Admin /> : <Navigate to="/" />} />
-          </Routes>
+          <div className="app-content">
+            <Routes>
+              <Route path="/" element={session ? (isAdmin ? <Navigate to="/admin" /> : <Navigate to="/booth" />) : <Login />} />
+              <Route path="/booth" element={session && !isAdmin ? <Photobooth key={resetKey} user={session.user} /> : <Navigate to="/" />} />
+              <Route path="/admin" element={session && isAdmin ? <Admin /> : <Navigate to="/" />} />
+            </Routes>
+          </div>
         </div>
-      </div>
-    </Router>
+      </Router>
+    </ToastProvider>
   );
 }
 

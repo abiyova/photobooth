@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import Webcam from "react-webcam";
 import { QRCodeCanvas } from "qrcode.react";
 import { supabase } from "../supabase";
+import { useToast } from "./Toast";
 
 const defaultFrameOptions = [
   "/assets/frames/frame-2.png",
@@ -109,6 +110,7 @@ export default function PhotoBooth() {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
   const frameImgRef = useRef(null);
+  const { showToast } = useToast();
 
   const [availableFrames, setAvailableFrames] = useState([]);
   const [selectedFrame, setSelectedFrame] = useState(null);
@@ -470,7 +472,7 @@ export default function PhotoBooth() {
       setDownloadUrl(qrUrl);
     } catch (error) {
       console.error("Error uploading photo:", error);
-      alert("Failed to upload photo for QR code. Check Supabase config.");
+      showToast("Gagal mengupload foto untuk QR code. Periksa konfigurasi Supabase.", "error");
     } finally {
       setIsUploading(false);
     }

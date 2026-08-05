@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "./Toast";
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState("photos");
@@ -9,6 +10,7 @@ export default function Admin() {
   const [selectedPhotos, setSelectedPhotos] = useState([]);
   const [printDataUrl, setPrintDataUrl] = useState(null);
   const navigate = useNavigate();
+  const { showToast, showConfirm } = useToast();
 
   useEffect(() => {
     const handleAfterPrint = () => setPrintDataUrl(null);
@@ -109,43 +111,58 @@ export default function Admin() {
     }
   };
 
-  const handleDelete = async (id, url) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus foto ini?")) return;
-    try {
-      const filePath = url.split('/public/booth/')[1];
-      if (filePath) {
-        await supabase.storage.from('booth').remove([filePath]);
-      }
-      const { error: dbError } = await supabase.from('photos').delete().eq('id', id);
-      if (dbError) throw dbError;
-      setSelectedPhotos(prev => prev.filter(pid => pid !== id));
-      fetchPhotos();
-    } catch (error) {
-      console.error("Error deleting photo:", error.message);
-      alert("Gagal menghapus foto.");
-    }
-  };
-
-  const handleDeleteSelected = async () => {
-    if (selectedPhotos.length === 0) return;
-    if (!window.confirm(`Hapus ${selectedPhotos.length} foto yang dipilih?`)) return;
-
-    for (const id of selectedPhotos) {
-      const photo = photos.find(p => p.id === id);
-      if (photo) {
+  const handleDelete = (id, url) => {
+    showConfirm({
+      title: "Hapus Foto",
+      message: "Apakah Anda yakin ingin menghapus foto ini?",
+      type: "danger",
+      confirmText: "Ya, Hapus",
+      onConfirm: async () => {
         try {
-          const filePath = photo.url.split('/public/booth/')[1];
+          const filePath = url.split('/public/booth/')[1];
           if (filePath) {
             await supabase.storage.from('booth').remove([filePath]);
           }
-          await supabase.from('photos').delete().eq('id', id);
-        } catch (err) {
-          console.error("Error deleting:", err);
+          const { error: dbError } = await supabase.from('photos').delete().eq('id', id);
+          if (dbError) throw dbError;
+          setSelectedPhotos(prev => prev.filter(pid => pid !== id));
+          showToast("Foto berhasil dihapus.", "success");
+          fetchPhotos();
+        } catch (error) {
+          console.error("Error deleting photo:", error.message);
+          showToast("Gagal menghapus foto.", "error");
         }
-      }
-    }
-    setSelectedPhotos([]);
-    fetchPhotos();
+      },
+    });
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedPhotos.length === 0) return;
+    showConfirm({
+      title: "Hapus Foto Terpilih",
+      message: `Hapus ${selectedPhotos.length} foto yang dipilih? Tindakan ini tidak dapat dibatalkan.`,
+      type: "danger",
+      confirmText: `Ya, Hapus ${selectedPhotos.length} Foto`,
+      onConfirm: async () => {
+        for (const id of selectedPhotos) {
+          const photo = photos.find(p => p.id === id);
+          if (photo) {
+            try {
+              const filePath = photo.url.split('/public/booth/')[1];
+              if (filePath) {
+                await supabase.storage.from('booth').remove([filePath]);
+              }
+              await supabase.from('photos').delete().eq('id', id);
+            } catch (err) {
+              console.error("Error deleting:", err);
+            }
+          }
+        }
+        showToast(`${selectedPhotos.length} foto berhasil dihapus.`, "success");
+        setSelectedPhotos([]);
+        fetchPhotos();
+      },
+    });
   };
 
   const toggleSelect = (id) => {
@@ -277,7 +294,7 @@ export default function Admin() {
 
   const saveFrame = async () => {
     if (!frameImageFile || slots.length === 0) {
-      alert("Harap unggah gambar dan gambar setidaknya 1 kotak slot foto.");
+      showToast("Harap unggah gambar dan gambar setidaknya 1 kotak slot foto.", "warning");
       return;
     }
     setIsSavingFrame(true);
@@ -313,7 +330,7 @@ export default function Admin() {
 
       if (configError) throw configError;
 
-      alert("Frame berhasil disimpan!");
+      showToast("Frame berhasil disimpan!", "success");
       setIsAddingFrame(false);
       setFrameImageFile(null);
       setFrameImageUrl(null);
@@ -321,21 +338,29 @@ export default function Admin() {
       fetchFrames();
     } catch (error) {
       console.error("Error saving frame:", error);
-      alert("Gagal menyimpan frame.");
+      showToast("Gagal menyimpan frame.", "error");
     } finally {
       setIsSavingFrame(false);
     }
   };
 
-  const handleDeleteFrame = async (id, imageFileName) => {
-    if (!window.confirm("Yakin ingin menghapus frame ini?")) return;
-    try {
-      await supabase.storage.from('booth').remove([`frames/configs/${id}`, `frames/images/${imageFileName}`]);
-      fetchFrames();
-    } catch (error) {
-      console.error("Error deleting frame:", error);
-      alert("Gagal menghapus frame.");
-    }
+  const handleDeleteFrame = (id, imageFileName) => {
+    showConfirm({
+      title: "Hapus Frame",
+      message: "Yakin ingin menghapus frame ini? Tindakan ini tidak dapat dibatalkan.",
+      type: "danger",
+      confirmText: "Ya, Hapus Frame",
+      onConfirm: async () => {
+        try {
+          await supabase.storage.from('booth').remove([`frames/configs/${id}`, `frames/images/${imageFileName}`]);
+          showToast("Frame berhasil dihapus.", "success");
+          fetchFrames();
+        } catch (error) {
+          console.error("Error deleting frame:", error);
+          showToast("Gagal menghapus frame.", "error");
+        }
+      },
+    });
   };
 
   return (
