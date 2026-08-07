@@ -687,7 +687,7 @@ export default function PhotoBooth() {
                         Get QR Code
                       </button>
                       <button className="photobooth-btn" onClick={handlePrint} style={{ background: '#2196F3', color: '#fff', border: '2px solid #2196F3', fontWeight: 700, fontSize: '22px', letterSpacing: '0.5px' }}>
-                        🖨️ Cetak Foto
+                        Cetak Foto
                       </button>
                     </>
                   )}
