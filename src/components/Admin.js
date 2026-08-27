@@ -244,53 +244,52 @@ export default function Admin() {
     setSlots(slots.filter((_, i) => i !== index));
   };
 
-  const drawCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas || !frameImageUrl) return;
-    const ctx = canvas.getContext("2d");
-    
-    const img = new Image();
-    img.src = frameImageUrl;
-    img.onload = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Draw a checkerboard pattern for transparency
-      const checkerSize = 20;
-      for (let y = 0; y < canvas.height; y += checkerSize) {
-        for (let x = 0; x < canvas.width; x += checkerSize) {
-          ctx.fillStyle = (Math.floor(x / checkerSize) + Math.floor(y / checkerSize)) % 2 === 0 ? '#ccc' : '#fff';
-          ctx.fillRect(x, y, checkerSize, checkerSize);
-        }
-      }
-
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // Draw saved slots
-      slots.forEach((slot, index) => {
-        ctx.strokeStyle = "red";
-        ctx.lineWidth = 4;
-        ctx.strokeRect(slot.x, slot.y, slot.width, slot.height);
-        ctx.fillStyle = "rgba(255, 0, 0, 0.2)";
-        ctx.fillRect(slot.x, slot.y, slot.width, slot.height);
-        
-        ctx.fillStyle = "red";
-        ctx.font = "30px Arial";
-        ctx.fillText(`Slot ${index + 1}`, slot.x + 10, slot.y + 40);
-      });
-
-      // Draw current rect
-      if (isDrawing && currentRect) {
-        ctx.strokeStyle = "blue";
-        ctx.lineWidth = 4;
-        ctx.strokeRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-      }
-    };
-  };
-
   useEffect(() => {
     if (isAddingFrame) {
+      const drawCanvas = () => {
+        const canvas = canvasRef.current;
+        if (!canvas || !frameImageUrl) return;
+        const ctx = canvas.getContext("2d");
+        
+        const img = new Image();
+        img.src = frameImageUrl;
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          // Draw a checkerboard pattern for transparency
+          const checkerSize = 20;
+          for (let y = 0; y < canvas.height; y += checkerSize) {
+            for (let x = 0; x < canvas.width; x += checkerSize) {
+              ctx.fillStyle = (Math.floor(x / checkerSize) + Math.floor(y / checkerSize)) % 2 === 0 ? '#ccc' : '#fff';
+              ctx.fillRect(x, y, checkerSize, checkerSize);
+            }
+          }
+
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          // Draw saved slots
+          slots.forEach((slot, index) => {
+            ctx.strokeStyle = "red";
+            ctx.lineWidth = 4;
+            ctx.strokeRect(slot.x, slot.y, slot.width, slot.height);
+            ctx.fillStyle = "rgba(255, 0, 0, 0.2)";
+            ctx.fillRect(slot.x, slot.y, slot.width, slot.height);
+            
+            ctx.fillStyle = "red";
+            ctx.font = "30px Arial";
+            ctx.fillText(`Slot ${index + 1}`, slot.x + 10, slot.y + 40);
+          });
+
+          // Draw current rect
+          if (isDrawing && currentRect) {
+            ctx.strokeStyle = "blue";
+            ctx.lineWidth = 4;
+            ctx.strokeRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
+          }
+        };
+      };
       drawCanvas();
     }
-  }, [frameImageUrl, slots, currentRect, isDrawing, isAddingFrame, drawCanvas]);
+  }, [frameImageUrl, slots, currentRect, isDrawing, isAddingFrame]);
 
   const saveFrame = async () => {
     if (!frameImageFile || slots.length === 0) {
