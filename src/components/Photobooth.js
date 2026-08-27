@@ -134,6 +134,19 @@ export default function PhotoBooth() {
   const [isUploading, setIsUploading] = useState(false);
   const [printDataUrl, setPrintDataUrl] = useState(null);
 
+  const [devices, setDevices] = useState([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState(null);
+
+  const handleDevices = React.useCallback(
+    (mediaDevices) =>
+      setDevices(mediaDevices.filter(({ kind }) => kind === "videoinput")),
+    [setDevices]
+  );
+
+  useEffect(() => {
+    navigator.mediaDevices.enumerateDevices().then(handleDevices);
+  }, [handleDevices]);
+
   useEffect(() => {
     const handleAfterPrint = () => setPrintDataUrl(null);
     window.addEventListener('afterprint', handleAfterPrint);
@@ -492,8 +505,8 @@ export default function PhotoBooth() {
 
   const frameDims = getFrameDimensions(selectedFrame);
   const aspectRatio = frameDims.width / frameDims.height;
-  const maxDisplayWidth = 180;
-  const maxDisplayHeight = 300;
+  const maxDisplayWidth = mode === "decorate" ? 360 : 180;
+  const maxDisplayHeight = mode === "decorate" ? 600 : 300;
   let displayWidth, displayHeight;
   if (aspectRatio > maxDisplayWidth / maxDisplayHeight) {
     // Wide frame — constrain by width
@@ -577,16 +590,37 @@ export default function PhotoBooth() {
           </div>
         ) : (
           <div className="photobooth-capture">
+            {(mode === "photo" || stickerOptions.length > 0) && (
             <div className="photobooth-webcam-panel">
               {mode === "photo" && (
                 <>
                   <div className="photobooth-webcam-wrap">
+                    {devices.length > 1 && (
+                      <div style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10 }}>
+                        <select 
+                          value={selectedDeviceId || ''} 
+                          onChange={(e) => setSelectedDeviceId(e.target.value)}
+                          style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ccc', fontFamily: 'Quicksand', cursor: 'pointer', background: 'rgba(255, 255, 255, 0.8)' }}
+                        >
+                          <option value="">Default Camera</option>
+                          {devices.map((device, key) => (
+                            <option key={device.deviceId} value={device.deviceId}>
+                              {device.label || `Camera ${key + 1}`}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     {/* Webcam */}
                     <Webcam
                       audio={false}
                       ref={webcamRef}
                       screenshotFormat="image/png"
-                      videoConstraints={videoConstraints}
+                      videoConstraints={{
+                        width: 1920,
+                        height: 1080,
+                        ...(selectedDeviceId ? { deviceId: selectedDeviceId } : { facingMode: "user" })
+                      }}
                       mirrored={true}
                       forceScreenshotSourceSize={true}
                     />
@@ -672,6 +706,7 @@ export default function PhotoBooth() {
                 </div>
               )}
             </div>
+            )}
 
             {/* Display frame */}
             <div
@@ -693,76 +728,79 @@ export default function PhotoBooth() {
                 </h2>
               )}
 
-              <canvas
-                ref={canvasRef}
-                className="photobooth-canvas"
-                style={canvasDisplayStyle}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-              />
+              <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+                <canvas
+                  ref={canvasRef}
+                  className="photobooth-canvas"
+                  style={canvasDisplayStyle}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                />
 
-              {mode === "decorate" && (
-                <div
-                  style={{
-                    position: "absolute",
-                    right: "-220px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: "1rem",
-                    minWidth: "160px",
-                  }}
-                >
-                  {!downloadUrl && !isUploading && (
-                    <>
-                      <button className="photobooth-btn" onClick={downloadPhoto}>
-                        Get QR Code
-                      </button>
-                      <button className="photobooth-btn" onClick={handlePrint} style={{ background: '#2196F3', color: '#fff', border: '2px solid #2196F3', fontWeight: 700, fontSize: '22px', letterSpacing: '0.5px' }}>
-                        🖨️ Cetak Foto
-                      </button>
-                    </>
-                  )}
-                  {isUploading && (
-                    <p
-                      style={{
-                        fontFamily: '"Quicksand", sans-serif',
-                        color: "#2d9c9c",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Uploading...
-                    </p>
-                  )}
-                  {downloadUrl && (
-                    <div
-                      style={{
-                        textAlign: "center",
-                        background: "white",
-                        padding: "1rem",
-                        borderRadius: "12px",
-                        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-                      }}
-                    >
-                      <QRCodeCanvas value={downloadUrl} size={150} />
+                {mode === "decorate" && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: '2rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '1rem',
+                      minWidth: '160px',
+                    }}
+                  >
+                    {!downloadUrl && !isUploading && (
+                      <>
+                        <button className="photobooth-btn" onClick={downloadPhoto}>
+                          Get QR Code
+                        </button>
+                        <button className="photobooth-btn" onClick={handlePrint} style={{ background: '#2196F3', color: '#fff', border: '2px solid #2196F3', fontWeight: 700, fontSize: '22px', letterSpacing: '0.5px' }}>
+                          🖨️ Cetak Foto
+                        </button>
+                      </>
+                    )}
+                    {isUploading && (
                       <p
                         style={{
-                          color: "#333",
-                          marginTop: "0.5rem",
-                          fontSize: "0.85rem",
-                          fontWeight: "bold",
                           fontFamily: '"Quicksand", sans-serif',
+                          color: "#2d9c9c",
+                          fontWeight: 600,
                         }}
                       >
-                        Scan to download!
+                        Uploading...
                       </p>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                    {downloadUrl && (
+                      <div
+                        style={{
+                          textAlign: "center",
+                          background: "white",
+                          padding: "1rem",
+                          borderRadius: "12px",
+                          boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                        }}
+                      >
+                        <QRCodeCanvas value={downloadUrl} size={150} />
+                        <p
+                          style={{
+                            color: "#333",
+                            marginTop: "0.5rem",
+                            fontSize: "0.85rem",
+                            fontWeight: "bold",
+                            fontFamily: '"Quicksand", sans-serif',
+                          }}
+                        >
+                          Scan to download!
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
