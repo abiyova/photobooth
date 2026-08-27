@@ -290,7 +290,7 @@ export default function Admin() {
     if (isAddingFrame) {
       drawCanvas();
     }
-  }, [frameImageUrl, slots, currentRect, isDrawing, isAddingFrame]);
+  }, [frameImageUrl, slots, currentRect, isDrawing, isAddingFrame, drawCanvas]);
 
   const saveFrame = async () => {
     if (!frameImageFile || slots.length === 0) {
@@ -305,7 +305,7 @@ export default function Admin() {
       const configFileName = `frame_${timestamp}.json`;
 
       // Upload image
-      const { data: imgData, error: imgError } = await supabase.storage
+      const { error: imgError } = await supabase.storage
         .from('booth')
         .upload(`frames/images/${imageFileName}`, frameImageFile, { contentType: frameImageFile.type });
       

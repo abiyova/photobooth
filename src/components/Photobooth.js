@@ -447,7 +447,7 @@ export default function PhotoBooth() {
       const fetchRes = await fetch(dataUrl);
       const blob = await fetchRes.blob();
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("booth")
         .upload(fileName, blob, { contentType: "image/jpeg" });
 
