@@ -1,0 +1,11 @@
+@font-face {
+  font-family: "CantikaCute";
+  src: url("../../public/assets/fonts/Cantika\ Cute\ Handwriting.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  font-family: "Quicksand", sans-serif;
+  color: #3a3a3a;
+}
