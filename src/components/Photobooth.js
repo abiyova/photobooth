@@ -18,7 +18,6 @@ const defaultFrameOptions = [
 
 const stickerOptions = [];
 
-const videoConstraints = { width: 1920, height: 1080, facingMode: "user" };
 
 const getFrameDimensions = (frame) => {
   if (!frame) return { width: 1200, height: 3000 };
