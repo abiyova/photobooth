@@ -124,6 +124,7 @@ export default function PhotoBooth() {
   const [draggingPhoto, setDraggingPhoto] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [countdown, setCountdown] = useState(null);
+  const [timerDuration, setTimerDuration] = useState(3);
 
   const [stickers, setStickers] = useState([]);
   const [draggingSticker, setDraggingSticker] = useState(null);
@@ -288,9 +289,9 @@ export default function PhotoBooth() {
     if (!canTakePhoto || countdown !== null) return;
 
     setCanTakePhoto(false);
-    setCountdown(3);
+    setCountdown(timerDuration);
 
-    let current = 3;
+    let current = timerDuration;
     const interval = setInterval(() => {
       current -= 1;
 
@@ -489,14 +490,24 @@ export default function PhotoBooth() {
     }, 500);
   };
 
-  const canvasDisplayStyle = {};
-  if (selectedFrame && !selectedFrame.imageUrl.includes("heart-frame")) {
-    canvasDisplayStyle.width = (1181 / 1772) * 500;
-    canvasDisplayStyle.height = 500;
+  const frameDims = getFrameDimensions(selectedFrame);
+  const aspectRatio = frameDims.width / frameDims.height;
+  const maxDisplayWidth = 250;
+  const maxDisplayHeight = 420;
+  let displayWidth, displayHeight;
+  if (aspectRatio > maxDisplayWidth / maxDisplayHeight) {
+    // Wide frame — constrain by width
+    displayWidth = maxDisplayWidth;
+    displayHeight = maxDisplayWidth / aspectRatio;
   } else {
-    canvasDisplayStyle.width = 200;
-    canvasDisplayStyle.height = 500;
+    // Tall frame — constrain by height
+    displayHeight = maxDisplayHeight;
+    displayWidth = maxDisplayHeight * aspectRatio;
   }
+  const canvasDisplayStyle = {
+    width: displayWidth,
+    height: displayHeight,
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -586,10 +597,33 @@ export default function PhotoBooth() {
                     )}
                   </div>
 
-                  {/* Buttons */}
-                  <div className="photobooth-btn-row">
-                    {canTakePhoto && (
-                      <>
+                  {/* Timer Selection & Buttons */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", marginTop: "16px" }}>
+                    {canTakePhoto && countdown === null && (
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        {[3, 5, 10].map(t => (
+                          <button
+                            key={t}
+                            onClick={() => setTimerDuration(t)}
+                            style={{
+                              padding: '6px 16px',
+                              borderRadius: '20px',
+                              border: timerDuration === t ? '2px solid #2d9c9c' : '2px solid #ddd',
+                              background: timerDuration === t ? '#2d9c9c' : '#fff',
+                              color: timerDuration === t ? '#fff' : '#666',
+                              cursor: 'pointer',
+                              fontWeight: 'bold',
+                              fontSize: '14px'
+                            }}
+                          >
+                            {t}s
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <div className="photobooth-btn-row" style={{ marginTop: 0 }}>
+                      {canTakePhoto && (
+                        <>
                         <button
                           className="photobooth-btn"
                           onClick={capturePhoto}
@@ -617,8 +651,9 @@ export default function PhotoBooth() {
                         onClick={redoLastPhoto}
                       >
                         ⟳
-                      </button>
-                    )}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </>
               )}
