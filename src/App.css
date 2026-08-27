@@ -38,7 +38,7 @@
   padding-bottom: 40px;
 }
 
-/* ===== Responsive ====== */
+/* ===== Responsive ===== */
 @media (max-width: 599px) {
   .app-logo-bar {
     padding: 14px 16px;
