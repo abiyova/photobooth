@@ -492,8 +492,8 @@ export default function PhotoBooth() {
 
   const frameDims = getFrameDimensions(selectedFrame);
   const aspectRatio = frameDims.width / frameDims.height;
-  const maxDisplayWidth = 250;
-  const maxDisplayHeight = 420;
+  const maxDisplayWidth = 180;
+  const maxDisplayHeight = 300;
   let displayWidth, displayHeight;
   if (aspectRatio > maxDisplayWidth / maxDisplayHeight) {
     // Wide frame — constrain by width
