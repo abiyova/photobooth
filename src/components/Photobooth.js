@@ -558,6 +558,8 @@ export default function PhotoBooth() {
         <button
           onClick={handleLogout}
           style={{
+            position: "absolute",
+            right: 0,
             padding: "0.4rem 1rem",
             background: "#f44336",
             color: "#fff",

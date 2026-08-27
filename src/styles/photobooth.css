@@ -88,6 +88,8 @@
   justify-content: center;
   color: #e8763a;
   border-color: #e8763a;
+  position: absolute;
+  left: 0;
 }
 
 .photobooth-btn-back:hover {
